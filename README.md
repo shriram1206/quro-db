@@ -1,84 +1,134 @@
-# Quro — AI Database Assistant
+<div align="center">
+  <img src="https://img.icons8.com/color/96/000000/api.png" alt="Logo" width="80" height="80">
 
-Quro is an intelligent Spring Boot application that translates natural language questions into executable SQL queries. It acts as an AI-powered database assistant, allowing users to interact with their MySQL databases using plain English instead of complex SQL syntax.
+  <h1 align="center">Quro — AI Database Assistant</h1>
 
-## 🚀 Features
+  <p align="center">
+    An intelligent Spring Boot application that translates natural language questions into executable SQL queries.
+    <br />
+    <br />
+    <a href="https://github.com/shriram1206/quro-db"><strong>Explore the docs »</strong></a>
+    <br />
+    <br />
+    <a href="https://github.com/shriram1206/quro-db">View Demo</a>
+    ·
+    <a href="https://github.com/shriram1206/quro-db/issues">Report Bug</a>
+    ·
+    <a href="https://github.com/shriram1206/quro-db/issues">Request Feature</a>
+  </p>
+</div>
 
-- **Natural Language Processing:** Converts everyday English into accurate SQL queries using OpenAI's GPT-4o.
-- **Automatic Database Initialization:** Automatically provisions the schema and populates sample data (Students, Faculty, Courses, etc.) on startup.
-- **Secure Configuration:** Protects sensitive AI API keys using environment variables (`.env`).
-- **Interactive UI:** Provides a clean, responsive web interface for querying and viewing results.
-- **RESTful API Architecture:** Clean separation of concerns with dedicated controllers, services, and models.
+<!-- BADGES -->
+<div align="center">
+  <img src="https://img.shields.io/badge/Java-17-ED8B00?style=for-the-badge&logo=java&logoColor=white" alt="Java 17">
+  <img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=spring-boot&logoColor=white" alt="Spring Boot">
+  <img src="https://img.shields.io/badge/MySQL-005C84?style=for-the-badge&logo=mysql&logoColor=white" alt="MySQL">
+  <img src="https://img.shields.io/badge/OpenAI_API-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI API">
+</div>
 
-## 🛠️ Tech Stack
+---
 
-- **Backend:** Java 17, Spring Boot 3.5
-- **Database:** MySQL, Spring Data JPA / JDBC
-- **AI Integration:** OpenAI API (GPT-4o) via GitHub Models
-- **Build Tool:** Maven
-- **Frontend:** Vanilla HTML, CSS, JavaScript
+## 📖 About The Project
 
-## 📋 Prerequisites
+**Quro** acts as an AI-powered database assistant, allowing users to interact with their MySQL databases using plain English instead of complex SQL syntax. Built with Spring Boot and powered by OpenAI's GPT-4o model, it bridges the gap between non-technical users and database management.
 
-Before you begin, ensure you have met the following requirements:
-- **Java 17** installed
-- **MySQL Server** installed and running
-- **Git** installed
+### ✨ Key Features
 
-## ⚙️ Setup & Installation
+* **🗣️ Natural Language Processing:** Converts everyday English into accurate SQL queries.
+* **⚡ Automatic Database Initialization:** Provisions the schema and populates sample data on startup.
+* **🛡️ Secure Configuration:** Protects sensitive AI API keys using `.env` files.
+* **🖥️ Interactive UI:** Clean, responsive web interface for querying and viewing results.
+* **🧩 RESTful Architecture:** Industry-standard separation of controllers, services, and models.
 
-**1. Clone the repository:**
-```bash
-git clone https://github.com/shriram1206/quro-db.git
-cd quro-db
-```
+---
 
-**2. Setup the MySQL Database:**
-Create a new database named `quro_db` in your MySQL server.
-```sql
-CREATE DATABASE quro_db;
-```
+## 🛠️ Supported Tech Stack
 
-**3. Configure Environment Variables:**
-Copy the example environment file to secure your API key.
-```bash
-cp .env.example .env
-```
-Open the `.env` file and replace the placeholder with your actual OpenAI/GitHub API key:
-```properties
-OPENAI_API_KEY=your_actual_api_key_here
-```
+| Component | Technology | Version |
+| --- | --- | --- |
+| **Backend Framework** | Spring Boot | `3.5+` |
+| **Language** | Java | `17+` |
+| **Database** | MySQL | `8.x` |
+| **ORM / Data Access** | Spring Data JPA / JDBC |
+| **AI Integration** | GPT-4o (GitHub Models) |
+| **Build Tool** | Maven |
 
-**4. Update Database Credentials (Optional):**
-If your MySQL username isn't `root` or your password isn't `Quro@123`, update these fields in `src/main/resources/application.properties`:
-```properties
-spring.datasource.username=your_mysql_username
-spring.datasource.password=your_mysql_password
-```
+---
+
+## 🚀 Getting Started
+
+Follow these instructions to get a local copy up and running.
+
+### 📋 Prerequisites
+
+Ensure you have the following installed:
+* [Java 17 JDK](https://adoptium.net/)
+* [MySQL Server](https://dev.mysql.com/downloads/mysql/)
+* [Git](https://git-scm.com/)
+
+### ⚙️ Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/shriram1206/quro-db.git
+   cd quro-db
+   ```
+
+2. **Setup the MySQL Database:**
+   ```sql
+   CREATE DATABASE quro_db;
+   ```
+
+3. **Secure Your API Keys:**
+   Copy the environment template:
+   ```bash
+   cp .env.example .env
+   ```
+   Open `.env` and add your GitHub/OpenAI API token:
+   ```properties
+   OPENAI_API_KEY=your_actual_api_key_here
+   ```
+
+4. **Update Database Credentials *(Optional)*:**
+   If your MySQL username/password differs from the defaults (`root` / `Quro@123`), update `src/main/resources/application.properties`:
+   ```properties
+   spring.datasource.username=your_username
+   spring.datasource.password=your_password
+   ```
+
+---
 
 ## 🏃‍♂️ Running the Application
 
-Use the Maven wrapper to build and run the application:
+Use the Maven wrapper to build and start the server:
 
 **Windows:**
 ```cmd
 .\mvnw.cmd spring-boot:run
 ```
 
-**Mac/Linux:**
+**Mac / Linux:**
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Once running, open your web browser and navigate to:
-**http://localhost:8081**
+🌐 **Access the UI at** 👉 `http://localhost:8081`
+
+---
 
 ## 💡 Usage Example
 
-1. Open the UI at `http://localhost:8081`.
-2. Type a natural language query, for example: 
-   > *"Show me the names and CGPAs of all Computer Science students who are in their 3rd year."*
-3. Quro will generate the SQL query, execute it against the MySQL database, and return the formatted results.
+1. Open your browser and navigate to the application dashboard.
+2. Type a natural language query:
+   > *"Show me the names and CGPAs of all Computer Science students who are in their 3rd year and have a CGPA above 8.0."*
+3. Watch as Quro securely generates the SQL, executes it against your local database, and displays the exact results!
 
-## 🔒 Security Note
-This project uses a `.env` file to separate secrets from the source code. The `.env` file is included in `.gitignore` to prevent sensitive credentials from being committed to version control.
+---
+
+## 🔒 Security Best Practices
+This project implements best practices for secret management. Access tokens are loaded via `.env`, which is strictly ignored via `.gitignore` to prevent leaks into version control.
+
+<p align="center">
+  <i>Developed with ❤️ by Shriram</i>
+</p>
+
