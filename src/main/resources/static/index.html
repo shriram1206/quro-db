@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quro — AI Database Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --primary: #5B21B6;
+      --primary-dark: #4C1D95;
+      --secondary: #7C3AED;
+      --bg: #F9FAFB;
+      --card-bg: #FFFFFF;
+      --nav-bg: #1F2937;
+      --border: #E5E7EB;
+      --text: #111827;
+      --text-light: #6B7280;
+      --text-lighter: #9CA3AF;
+      --shadow: 0 10px 40px rgba(91,33,182,0.12);
+      --shadow-sm: 0 2px 8px rgba(91,33,182,0.06);
+    }
+
+    body {
+      font-family: 'Poppins', -apple-system, sans-serif;
+      background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+      color: var(--text);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Navigation Bar */
+    .navbar {
+      background: var(--nav-bg);
+      padding: 18px 0;
+      box-shadow: 0 4px 20px rgba(31,41,55,0.7);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .logo-icon {
+      width: 46px;
+      height: 46px;
+      background: transparent;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 9px;
+    }
+
+    .logo-text {
+      color: white;
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -1px;
+    }
+
+    .nav-subtitle {
+      color: #D1D5DB;
+      font-size: 14px;
+      margin-left: 60px;
+      font-weight: 400;
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 50px 32px;
+    }
+
+    /* Query Card */
+    .query-card {
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 40px;
+      margin-bottom: 32px;
+      border: 2px solid var(--border);
+    }
+
+    .card-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 20px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .search-area {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 18px 20px;
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      font-family: inherit;
+      font-size: 16px;
+      color: var(--text);
+      background: var(--card-bg);
+      transition: all 0.3s;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(8,145,178,0.12);
+    }
+
+    .search-btn {
+      padding: 18px 36px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border: none;
+      border-radius: 14px;
+      color: white;
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 6px 20px rgba(91,33,182,0.3);
+      white-space: nowrap;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 28px rgba(91,33,182,0.4);
+    }
+
+    .search-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Quick Examples */
+    .quick-examples {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .quick-example {
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--primary-dark);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .quick-example:hover {
+      background: linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%);
+      color: white;
+      border-color: var(--primary);
+      transform: scale(1.02);
+    }
+
+    /* Loading State */
+    .loading-card {
+      display: none;
+      background: var(--card-bg);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: var(--shadow);
+      margin-bottom: 32px;
+      border: 2px solid var(--border);
+    }
+
+    .loading-card.show {
+      display: block;
+    }
+
+    .loading-content {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 16px;
+      color: var(--text-light);
+      font-weight: 500;
+    }
+
+    /* Error State */
+    .error-card {
+      display: none;
+      background: #FEF2F2;
+      border: 2px solid #FCA5A5;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 32px;
+      color: #B91C1C;
+      font-weight: 500;
+    }
+
+    .error-card.show {
+      display: block;
+    }
+
+    /* Result Container */
+    .result-section {
+      display: none;
+    }
+
+    .result-section.show {
+      display: block;
+    }
+
+    /* Result Header */
+    .result-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      border-radius: 20px 20px 0 0;
+      padding: 28px 40px;
+      box-shadow: var(--shadow);
+    }
+
+    .result-question {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 600;
+    }
+
+    .result-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .meta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Action Buttons */
+    .action-bar {
+      background: var(--card-bg);
+      padding: 20px 40px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      border-left: 2px solid var(--border);
+      border-right: 2px solid var(--border);
+    }
+
+    .action-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary-dark);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .action-btn:hover {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      border-color: var(--primary);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(91,33,182,0.3);
+    }
+
+    .action-btn.active {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* Answer Card */
+    .answer-card {
+      background: var(--card-bg);
+      padding: 32px 40px;
+      border-left: 2px solid var(--border);
+      border-right: 2px solid var(--border);
+    }
+
+    .card-label {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--primary-dark);
+      margin-bottom: 16px;
+    }
+
+    .answer-text {
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    /* SQL Block */
+    .sql-block {
+      display: none;
+      background: #F8FAFC;
+      padding: 24px;
+      border-left: 4px solid var(--primary);
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 14px;
+      color: #334155;
+      overflow-x: auto;
+      margin: 0 40px;
+    }
+
+    .sql-block.show {
+      display: block;
+    }
+
+    /* Data Table Card */
+    .data-card {
+      background: var(--card-bg);
+      padding: 32px 40px;
+      border-radius: 0 0 20px 20px;
+      box-shadow: var(--shadow);
+      border: 2px solid var(--border);
+      border-top: none;
+      overflow-x: auto;
+    }
+
+    .data-card.hidden {
+      display: none;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    .data-table thead th {
+      background: linear-gradient(135deg, #5B21B6 0%, #7C3AED 100%);
+      color: white;
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      border: none;
+    }
+
+    .data-table thead th:first-child {
+      border-radius: 10px 0 0 0;
+    }
+
+    .data-table thead th:last-child {
+      border-radius: 0 10px 0 0;
+    }
+
+    .data-table tbody td {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .data-table tbody tr:hover {
+      background: linear-gradient(135deg, #F5F3FF 0%, #EDE9FE 100%);
+    }
+
+    /* Welcome State */
+    .welcome-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .welcome-icon {
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      border-radius: 24px;
+      margin: 0 auto 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 50px;
+      box-shadow: 0 10px 40px rgba(91,33,182,0.3);
+    }
+
+    .welcome-title {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      color: var(--primary-dark);
+    }
+
+    .welcome-desc {
+      font-size: 18px;
+      color: var(--text-light);
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .nav-subtitle {
+        display: none;
+      }
+      .search-area {
+        flex-direction: column;
+      }
+      .search-btn {
+        width: 100%;
+      }
+      .quick-examples {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <div class="logo-area">
+        <div class="logo-icon">
+          <svg width="28" height="28" viewBox="0 0 20 20" title="Quro" style="opacity:.9;transition:opacity .2s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=.9">
+            <circle cx="5"  cy="3"  r="1.2" fill="#FFFFFF"><animate attributeName="opacity" values="1;0.45;1" dur="3s" repeatCount="indefinite" begin="0s"/></circle>
+            <circle cx="10" cy="3"  r="1.2" fill="#FFFFFF"><animate attributeName="opacity" values="1;0.45;1" dur="3s" repeatCount="indefinite" begin="0.3s"/></circle>
+            <circle cx="15" cy="3"  r="1.2" fill="#FFFFFF"><animate attributeName="opacity" values="1;0.45;1" dur="3s" repeatCount="indefinite" begin="0.6s"/></circle>
+            <line x1="5"  y1="4.5" x2="10" y2="9"  stroke="#FFFFFF" stroke-width="0.8" opacity="0.4"/>
+            <line x1="10" y1="4.5" x2="10" y2="9"  stroke="#FFFFFF" stroke-width="0.8" opacity="0.4"/>
+            <line x1="15" y1="4.5" x2="10" y2="9"  stroke="#FFFFFF" stroke-width="0.8" opacity="0.4"/>
+            <circle cx="10" cy="10" r="1.5" fill="#FFFFFF"><animate attributeName="r" values="1.5;1.8;1.5" dur="3s" repeatCount="indefinite"/><animate attributeName="opacity" values="1;0.6;1" dur="3s" repeatCount="indefinite"/></circle>
+            <line x1="10" y1="11.5" x2="5"  y2="15.5" stroke="#FFFFFF" stroke-width="0.8" opacity="0.4"/>
+            <line x1="10" y1="11.5" x2="10" y2="16"   stroke="#FFFFFF" stroke-width="0.8" opacity="0.4"/>
+            <line x1="10" y1="11.5" x2="15" y2="15.5" stroke="#FFFFFF" stroke-width="0.8" opacity="0.4"/>
+            <circle cx="5"  cy="17" r="1.2" fill="#FFFFFF"><animate attributeName="opacity" values="1;0.45;1" dur="3s" repeatCount="indefinite" begin="1.5s"/></circle>
+            <circle cx="10" cy="17" r="1.2" fill="#FFFFFF"><animate attributeName="opacity" values="1;0.45;1" dur="3s" repeatCount="indefinite" begin="1.8s"/></circle>
+            <circle cx="15" cy="17" r="1.2" fill="#FFFFFF"><animate attributeName="opacity" values="1;0.45;1" dur="3s" repeatCount="indefinite" begin="2.1s"/></circle>
+          </svg>
+        </div>
+        <div class="logo-text">Quro</div>
+      </div>
+      <div class="nav-subtitle">AI-Powered Database Assistant</div>
+    </div>
+  </nav>
+
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Query Input Card -->
+    <div class="query-card">
+      <div class="card-title">🔍 Ask Your Database</div>
+      <div class="search-area">
+        <textarea class="search-input" id="queryInput" rows="2" placeholder="Type your question in natural language... (e.g., Show all students who scored above 90)"></textarea>
+        <button class="search-btn" onclick="executeQuery()" id="queryBtn">Search</button>
+      </div>
+      <div class="quick-examples">
+        <div class="quick-example" onclick="fillQuery('Show all students')">📚 Show all students</div>
+        <div class="quick-example" onclick="fillQuery('Students who scored above 90')">⭐ High achievers (90+)</div>
+        <div class="quick-example" onclick="fillQuery('Which faculty teaches Database Management?')">👨‍🏫 Database faculty</div>
+        <div class="quick-example" onclick="fillQuery('List all courses')">📖 All courses</div>
+        <div class="quick-example" onclick="fillQuery('Top 5 students by marks')">🏆 Top 5 students</div>
+        <div class="quick-example" onclick="fillQuery('Count total faculty members')">📊 Faculty count</div>
+      </div>
+    </div>
+
+    <!-- Welcome State -->
+    <div class="welcome-state" id="welcomeState">
+      <div class="welcome-icon">🎯</div>
+      <h1 class="welcome-title">Ask Anything About Your Data</h1>
+      <p class="welcome-desc">Use natural language to query your database. Our AI converts your questions into SQL and delivers insights instantly.</p>
+    </div>
+
+    <!-- Loading State -->
+    <div class="loading-card" id="loadingCard">
+      <div class="loading-content">
+        <div class="spinner"></div>
+        <span class="loading-text">Processing your query with AI...</span>
+      </div>
+    </div>
+
+    <!-- Error State -->
+    <div class="error-card" id="errorCard"></div>
+
+    <!-- Results Section -->
+    <div class="result-section" id="resultSection">
+      <!-- Result Header -->
+      <div class="result-header">
+        <div class="result-question">YOUR QUERY</div>
+        <div class="result-title" id="resultQuestion"></div>
+        <div class="result-meta">
+          <div class="meta-badge" id="rowBadge" style="display:none;">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M3 12v3c0 1.657 3.134 3 7 3s7-1.343 7-3v-3c0 1.657-3.134 3-7 3s-7-1.343-7-3z"></path>
+              <path d="M3 7v3c0 1.657 3.134 3 7 3s7-1.343 7-3V7c0 1.657-3.134 3-7 3S3 8.657 3 7z"></path>
+              <path d="M17 5c0 1.657-3.134 3-7 3S3 6.657 3 5s3.134-3 7-3 7 1.343 7 3z"></path>
+            </svg>
+            <span id="rowCount"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button class="action-btn" onclick="toggleSQL()" id="sqlBtn">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polyline points="16 18 22 12 16 6"></polyline>
+            <polyline points="8 6 2 12 8 18"></polyline>
+          </svg>
+          View SQL
+        </button>
+        <button class="action-btn" onclick="copyAnswer()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          Copy Answer
+        </button>
+        <button class="action-btn" onclick="exportPDF()" id="pdfBtn" style="display:none;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          Export PDF
+        </button>
+        <button class="action-btn" onclick="exportCSV()" id="csvBtn" style="display:none;">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Export CSV
+        </button>
+      </div>
+
+      <!-- SQL Block -->
+      <div class="sql-block" id="sqlBlock" style="margin-top: 0; margin-bottom: 0;">
+        <pre id="sqlCode" style="margin: 0; white-space: pre-wrap; word-break: break-all;"></pre>
+      </div>
+
+      <!-- Answer Card -->
+      <div class="answer-card">
+        <div class="card-label">📝 AI ANSWER</div>
+        <div class="answer-text" id="answerText"></div>
+      </div>
+
+      <!-- Data Table -->
+      <div class="data-card" id="dataCard">
+        <div class="card-label">📊 DATA RESULTS</div>
+        <div id="dataTable"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = "/api";
+    let lastRows = [];
+    let lastSQL = "";
+    let lastQuestion = "";
+
+    // Fill query from quick examples
+    function fillQuery(text) {
+      document.getElementById("queryInput").value = text;
+      executeQuery();
+    }
+
+    // Toggle SQL view
+    function toggleSQL() {
+      const sqlBlock = document.getElementById("sqlBlock");
+      const btn = document.getElementById("sqlBtn");
+      const isShown = sqlBlock.classList.toggle("show");
+      btn.classList.toggle("active", isShown);
+    }
+
+    // Copy answer to clipboard
+    function copyAnswer() {
+      const text = document.getElementById("answerText").textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("✅ Answer copied to clipboard!");
+      });
+    }
+
+    // Export to PDF (Table Only)
+    function exportPDF() {
+      if (!lastRows.length) {
+        alert("No data to export!");
+        return;
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('l', 'mm', 'a4'); // Landscape orientation
+      
+      // Title
+      doc.setFontSize(18);
+      doc.setTextColor(91, 33, 182);
+      doc.text('Quro Database Query Results', 15, 15);
+      
+      // Query text
+      doc.setFontSize(11);
+      doc.setTextColor(100);
+      doc.text(`Query: ${lastQuestion}`, 15, 25);
+      
+      // Prepare table data
+      const columns = Object.keys(lastRows[0]);
+      const rows = lastRows.map(row => columns.map(col => String(row[col] ?? '')));
+      
+      // Generate table
+      doc.autoTable({
+        head: [columns],
+        body: rows,
+        startY: 32,
+        theme: 'grid',
+        styles: {
+          fontSize: 9,
+          cellPadding: 4,
+        },
+        headStyles: {
+          fillColor: [91, 33, 182],
+          textColor: 255,
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [245, 243, 255],
+        },
+      });
+      
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      doc.setFontSize(9);
+      doc.setTextColor(150);
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.text(
+          `Page ${i} of ${pageCount} | Generated: ${new Date().toLocaleString()}`,
+          doc.internal.pageSize.getWidth() / 2,
+          doc.internal.pageSize.getHeight() - 10,
+          { align: 'center' }
+        );
+      }
+      
+      // Save
+      doc.save(`quro_data_${Date.now()}.pdf`);
+    }
+
+    // Export to CSV
+    function exportCSV() {
+      if (!lastRows.length) {
+        alert("No data to export!");
+        return;
+      }
+      
+      const keys = Object.keys(lastRows[0]);
+      const csv = [
+        keys.join(","),
+        ...lastRows.map(r => keys.map(k => `"${String(r[k]??'').replace(/"/g,'""')}"`).join(","))
+      ].join("\n");
+      
+      const blob = new Blob([csv], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `quro_export_${Date.now()}.csv`;
+      a.click();
+    }
+
+    // Build HTML table
+    function buildTable(rows) {
+      if (!rows || !rows.length) return "";
+      const keys = Object.keys(rows[0]);
+      return `<table class="data-table">
+        <thead><tr>${keys.map(k => `<th>${k}</th>`).join("")}</tr></thead>
+        <tbody>${rows.map(r => `<tr>${keys.map(k => `<td>${r[k]??''}</td>`).join("")}</tr>`).join("")}</tbody>
+      </table>`;
+    }
+
+    // Main query execution
+    async function executeQuery() {
+      const question = document.getElementById("queryInput").value.trim();
+      if (!question) {
+        alert("Please enter a question!");
+        return;
+      }
+
+      lastQuestion = question;
+
+      const welcomeState = document.getElementById("welcomeState");
+      const loadingCard = document.getElementById("loadingCard");
+      const errorCard = document.getElementById("errorCard");
+      const resultSection = document.getElementById("resultSection");
+      const queryBtn = document.getElementById("queryBtn");
+
+      // Show loading
+      welcomeState.style.display = "none";
+      resultSection.classList.remove("show");
+      errorCard.classList.remove("show");
+      loadingCard.classList.add("show");
+      queryBtn.disabled = true;
+
+      try {
+        const response = await fetch(`${API}/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: question })
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({}));
+          throw new Error(error.answer || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Hide loading
+        loadingCard.classList.remove("show");
+        queryBtn.disabled = false;
+
+        // Store data
+        lastRows = data.rows || [];
+        lastSQL = data.sqlUsed || "";
+
+        // Update UI
+        document.getElementById("resultQuestion").textContent = question;
+        document.getElementById("answerText").textContent = data.answer || "Query completed successfully.";
+        document.getElementById("sqlCode").textContent = lastSQL;
+        
+        // Handle data display
+        const rowCount = lastRows.length;
+        if (rowCount > 0) {
+          document.getElementById("rowBadge").style.display = "flex";
+          document.getElementById("rowCount").textContent = `${rowCount} row${rowCount !== 1 ? 's' : ''}`;
+          document.getElementById("dataTable").innerHTML = buildTable(lastRows);
+          document.getElementById("dataCard").classList.remove("hidden");
+          document.getElementById("pdfBtn").style.display = "flex";
+          document.getElementById("csvBtn").style.display = "flex";
+        } else {
+          document.getElementById("rowBadge").style.display = "none";
+          document.getElementById("dataCard").classList.add("hidden");
+          document.getElementById("pdfBtn").style.display = "none";
+          document.getElementById("csvBtn").style.display = "none";
+        }
+
+        // Show results
+        resultSection.classList.add("show");
+
+      } catch (error) {
+        loadingCard.classList.remove("show");
+        queryBtn.disabled = false;
+        errorCard.textContent = "⚠️ Error: " + error.message;
+        errorCard.classList.add("show");
+      }
+    }
+
+    // Enter key support
+    document.getElementById("queryInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && e.ctrlKey) {
+        e.preventDefault();
+        executeQuery();
+      }
+    });
+  </script>
+</body>
+</html>
